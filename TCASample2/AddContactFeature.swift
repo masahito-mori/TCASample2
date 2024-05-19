@@ -12,7 +12,7 @@ import SwiftUI
 @Reducer
 struct AddContactFeature {
     @ObservableState
-    struct State {
+    struct State: Equatable {
         var contact: Contact
         
         init(contact: Contact) {
@@ -25,6 +25,7 @@ struct AddContactFeature {
         case delegate(Delegate)
         case saveButtonTapped
         case setName(String)
+        @CasePathable
         enum Delegate {
             case saveContact(Contact)
         }

@@ -9,7 +9,7 @@ import Foundation
 import ComposableArchitecture
 import SwiftUI
 
-struct Contact: Identifiable {
+struct Contact: Equatable, Identifiable {
     let id: UUID
     var name: String
 }
@@ -17,7 +17,7 @@ struct Contact: Identifiable {
 @Reducer
 struct ContactsFeature {
     @ObservableState
-    struct State {
+    struct State: Equatable {
         var contacts: IdentifiedArrayOf<Contact> = []
         @Presents var destination: Destination.State?
         
@@ -27,18 +27,19 @@ struct ContactsFeature {
         case addButtonTapped
         case deleteButtonTapped(id: Contact.ID)
         case destination(PresentationAction<Destination.Action>)
-        enum Alert {
+        enum Alert: Equatable {
             case confirmDeletion(id: Contact.ID)
         }
     }
     
+    @Dependency(\.uuid) var uuid
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .addButtonTapped:
                 state.destination = .addContact(
                     AddContactFeature.State(
-                        contact: Contact(id: UUID(), name: "")
+                        contact: Contact(id: self.uuid(), name: "")
                     )
                 )
                 return .none
@@ -51,15 +52,7 @@ struct ContactsFeature {
             case .destination:
                 return .none
             case let .deleteButtonTapped(id: id):
-                state.destination = .alert(
-                    AlertState {
-                        TextState("Are you sure?")
-                    } actions: {
-                        ButtonState(role: .destructive, action: .confirmDeletion(id: id)) {
-                            TextState("Delete")
-                        }
-                    }
-                )
+                state.destination = .alert(.deleteConfirmation(id: id))
                 return .none
             }
         }
@@ -68,10 +61,22 @@ struct ContactsFeature {
 }
 
 extension ContactsFeature {
-    @Reducer
+    @Reducer(state: .equatable)
     enum Destination {
         case addContact(AddContactFeature)
         case alert(AlertState<ContactsFeature.Action.Alert>)
+    }
+}
+
+extension AlertState where Action == ContactsFeature.Action.Alert {
+    static func deleteConfirmation(id: UUID) -> Self {
+        Self {
+            TextState("Are you sure?")
+        } actions: {
+            ButtonState(role: .destructive, action: .confirmDeletion(id: id)) {
+                TextState("Delete")
+            }
+        }
     }
 }
 
