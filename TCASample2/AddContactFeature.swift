@@ -51,7 +51,7 @@ struct AddContactFeature {
     }
 }
 
-struct AddContactsView: View {
+struct AddContactView: View {
     @Bindable var store: StoreOf<AddContactFeature>
     
     var body: some View {
@@ -74,7 +74,7 @@ struct AddContactsView: View {
 
 #Preview {
     NavigationStack {
-        AddContactsView(
+        AddContactView(
             store: Store(
                 initialState: AddContactFeature.State(
                     contact: Contact(
